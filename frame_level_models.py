@@ -22,6 +22,8 @@ import tensorflow as tf
 import model_utils as utils
 
 import tensorflow.contrib.slim as slim
+import tensorflow.contrib.learn.python.learn as learn
+
 from tensorflow import flags
 
 FLAGS = flags.FLAGS
@@ -72,8 +74,10 @@ class FrameLevelLogisticModel(models.BaseModel):
     num_frames = tf.cast(tf.expand_dims(num_frames, 1), tf.float32)
     feature_size = model_input.get_shape().as_list()[2]
 
+    # denominator is a [num_frames x num_features] tensor filled with num_frames
     denominators = tf.reshape(
         tf.tile(num_frames, [1, feature_size]), [-1, feature_size])
+    # average over time frames. [batch_size x num_features]
     avg_pooled = tf.reduce_sum(model_input,
                                axis=[1]) / denominators
 
@@ -211,8 +215,8 @@ class LstmModel(models.BaseModel):
       model in the 'predictions' key. The dimensions of the tensor are
       'batch_size' x 'num_classes'.
     """
-    lstm_size = FLAGS.lstm_cells
-    number_of_layers = FLAGS.lstm_layers
+    lstm_size = FLAGS.lstm_cells #128
+    number_of_layers = FLAGS.lstm_layers #2
 
     ## Batch normalize the input
     stacked_lstm = tf.contrib.rnn.MultiRNNCell(
@@ -225,6 +229,7 @@ class LstmModel(models.BaseModel):
 
     loss = 0.0
     with tf.variable_scope("RNN"):
+      # state tuple is set to false above
       outputs, state = tf.nn.dynamic_rnn(stacked_lstm, model_input,
                                          sequence_length=num_frames,
                                          dtype=tf.float32)
@@ -235,3 +240,38 @@ class LstmModel(models.BaseModel):
         model_input=state,
         vocab_size=vocab_size,
         **unused_params)
+
+class LstmFullyConnectedModel(models.BaseModel):
+
+  def create_model(self, model_input, vocab_size, num_frames, **unused_params):
+    """Creates a model which uses a stack of LSTMs to represent the video.
+
+    Args:
+      model_input: A 'batch_size' x 'max_frames' x 'num_features' matrix of
+                   input features.
+      vocab_size: The number of classes in the dataset.
+      num_frames: A vector of length 'batch' which indicates the number of
+           frames for each video (before padding).
+
+    Returns:
+      A dictionary with a tensor containing the probability predictions of the
+      model in the 'predictions' key. The dimensions of the tensor are
+      'batch_size' x 'num_classes'.
+    """
+    lstm_size = FLAGS.lstm_cells #128
+    number_of_layers = FLAGS.lstm_layers #2
+
+    lstm_cell = tf.contrib.rnn.BasicLSTMCell(
+                    lstm_size, forget_bias=1.0, state_is_tuple=False)
+
+    loss = 0.0
+    with tf.variable_scope("RNN"):
+      outputs, state = tf.nn.dynamic_rnn(lstm_cell, model_input,
+                                         sequence_length=num_frames,
+                                         dtype=tf.float32)
+    # state is (h,c) concatenated
+    output = slim.fully_connected(
+      state, vocab_size, activation_fn=tf.nn.sigmoid,
+      weights_regularizer=slim.l2_regularizer(1e-8))
+
+  return {"predictions": output}
