@@ -20,9 +20,7 @@ import models
 import video_level_models
 import tensorflow as tf
 import model_utils as utils
-
 import tensorflow.contrib.slim as slim
-import tensorflow.contrib.learn.python.learn as learn
 
 from tensorflow import flags
 
