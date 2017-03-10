@@ -27,6 +27,11 @@ flags.DEFINE_integer(
     "moe_num_mixtures", 2,
     "The number of mixtures (excluding the dummy 'expert') used for MoeModel.")
 
+class ConvNetModel(models.BaseModel):
+  """Convolutional Network"""
+  def create_model(self, model_input, vocab_size, l2_penalty=1e-8, **unused_params):
+      pass
+
 class LogisticModel(models.BaseModel):
   """Logistic model with L2 regularization."""
 

@@ -132,7 +132,7 @@ class YT8MAggregatedFeatureReader(BaseReader):
 class YT8MFrameFeatureReader(BaseReader):
   """Reads TFRecords of SequenceExamples.
 
-  The TFRecords must contain SequenceExamples with the sparse in64 'labels'
+  The TFRecords must contain SequenceExamples with the sparse int64 'labels'
   context feature and a fixed length byte-quantized feature vector, obtained
   from the features in 'feature_names'. The quantized features will be mapped
   back into a range between min_quantized_value and max_quantized_value.
@@ -268,4 +268,3 @@ class YT8MFrameFeatureReader(BaseReader):
     batch_frames = tf.expand_dims(num_frames, 0)
 
     return batch_video_ids, batch_video_matrix, batch_labels, batch_frames
-
