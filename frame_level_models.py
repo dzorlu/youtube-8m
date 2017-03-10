@@ -273,5 +273,4 @@ class LstmFullyConnectedModel(models.BaseModel):
     output = slim.fully_connected(
       state, vocab_size, activation_fn=tf.nn.sigmoid,
       weights_regularizer=slim.l2_regularizer(1e-8))
-
-  return {"predictions": output}
+    return {"predictions": output}
